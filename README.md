@@ -1,7 +1,3 @@
-Got it 👍 — here’s a **refined, formal English version of your README.md**, formatted according to best practices for GitHub projects and Rust crates:
-
----
-
 ````markdown
 # CKEditor Bot 🚀
 
