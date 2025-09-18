@@ -66,7 +66,7 @@ fn display_banner() {
         "\n; ================================================================\n\
          ; CKEDITOR BOT © 2025 m4yestiK\n\
          ; Licensed under the MIT License\n\
-         ; https://github.com/xm4yestiK/ckeditor-bot\n\
+         ; https://github.com/xm4yestiK/ckeditor_bot\n\
          ; ================================================================\n"
         .bright_black()
     );
