@@ -1,0 +1,25 @@
+[package]
+name = "ckeditor-bot"
+version = "0.1.0"
+authors = ["m4yestiK <oxygamerz64@gmail.com>"]
+edition = "2021"
+description = "Bypass CKEditor copy-paste blocker using Enigo + DeviceQuery"
+repository = "https://github.com/xm4yestiK/ckeditor-bot"
+license = "MIT"
+readme = "README.md"
+keywords = ["ckeditor", "automation", "bot", "rust"]
+categories = ["command-line-utilities"]
+
+
+[dependencies]
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "ansi"] }
+device_query = "1"
+enigo = "0.1"
+figlet-rs = "0.1"
+colored = "2"
+
+
+[build-dependencies]
+winres = "0.1.12" 
