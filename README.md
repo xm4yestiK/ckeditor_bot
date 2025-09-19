@@ -27,8 +27,10 @@ This bot automatically types user-provided text into the target application usin
 git clone https://github.com/xm4yestiK/ckeditor-bot.git
 cd ckeditor-bot
 cargo build --release
+
 The binary will be available at:
 target/release/ckeditor-bot
+
 Requirements
 Rust toolchain: Install Rust
 
@@ -66,16 +68,20 @@ Note: The bot no longer adds an extra newline at the end of typed text.
 Code Formatting & Linting
 cargo fmt --all
 cargo clippy --all-targets --all-features -- -D warnings
+
 Run Tests
 cargo test
+
 Run in Debug Mode
 cargo run
+
 📂 Project Structure
 src/
  └─ main.rs        # Entrypoint
 Cargo.toml         # Dependencies & metadata
 LICENSE            # MIT license
 README.md          # Project documentation
+
 🚀 Roadmap
  Cross-platform testing (Linux/Wayland, macOS)
 
