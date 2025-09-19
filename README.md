@@ -28,9 +28,6 @@ git clone https://github.com/xm4yestiK/ckeditor-bot.git
 cd ckeditor-bot
 cargo build --release
 The binary will be available at:
-
-arduino
-Copy code
 target/release/ckeditor-bot
 Requirements
 Rust toolchain: Install Rust
@@ -45,9 +42,6 @@ Tested on:
 
 ▶ Usage
 Run the program:
-
-bash
-Copy code
 ./ckeditor-bot
 Enter the text you want the bot to type (up to 1000 words).
 
@@ -60,9 +54,6 @@ Press F8 → The text will be typed automatically.
 Press F10 → The program will exit.
 
 Example output:
-
-pgsql
-Copy code
 🤖 Enter the text you want me to type (max 1000 words):
 Hello CKEditor!
 
@@ -73,21 +64,13 @@ Note: The bot no longer adds an extra newline at the end of typed text.
 
 🔧 Development
 Code Formatting & Linting
-bash
-Copy code
 cargo fmt --all
 cargo clippy --all-targets --all-features -- -D warnings
 Run Tests
-bash
-Copy code
 cargo test
 Run in Debug Mode
-bash
-Copy code
 cargo run
 📂 Project Structure
-bash
-Copy code
 src/
  └─ main.rs        # Entrypoint
 Cargo.toml         # Dependencies & metadata
