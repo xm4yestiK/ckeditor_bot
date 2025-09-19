@@ -1,9 +1,3 @@
-Berikut versi **diperbarui** dokumentasi README kamu agar lebih akurat dengan perubahan terbaru:
-
-* Menghapus newline ekstra di akhir teks
-* Ctrl+Z / Cmd+Z log bersih
-* Menjaga input multiline tetap utuh
-
 ````markdown
 # CKEditor Bot 🚀
 
