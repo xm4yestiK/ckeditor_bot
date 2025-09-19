@@ -1,3 +1,10 @@
+Berikut versi **diperbarui** dokumentasi README kamu agar lebih akurat dengan perubahan terbaru:
+
+* Menghapus newline ekstra di akhir teks
+* Ctrl+Z / Cmd+Z log bersih
+* Menjaga input multiline tetap utuh
+
+````markdown
 # CKEditor Bot 🚀
 
 A Rust-based utility to **bypass CKEditor’s copy-paste restrictions**.  
@@ -27,79 +34,115 @@ This bot automatically types user-provided text into the target application usin
 git clone https://github.com/xm4yestiK/ckeditor-bot.git
 cd ckeditor-bot
 cargo build --release
+````
 
 The binary will be available at:
+
+```
 target/release/ckeditor-bot
+```
 
-Requirements
-Rust toolchain: Install Rust
+### Requirements
 
-Tested on:
+* **Rust toolchain**: [Install Rust](https://www.rust-lang.org/tools/install)
+* Tested on:
 
-✅ Windows 10/11
+  * ✅ Windows 10/11
+  * ✅ Linux (X11)
+  * ✅ macOS (limited support)
 
-✅ Linux (X11)
+---
 
-✅ macOS (limited support)
+## ▶ Usage
 
-▶ Usage
 Run the program:
+
+```bash
 ./ckeditor-bot
-Enter the text you want the bot to type (up to 1000 words).
+```
 
-Press Ctrl+Z (Windows) / Cmd+Z (Mac) to end input early.
+1. Enter the text you want the bot to type (up to 1000 words).
 
-Switch focus to the target application (e.g., CKEditor in a browser).
-
-Press F8 → The text will be typed automatically.
-
-Press F10 → The program will exit.
+   * Press **Ctrl+Z** (Windows) / **Cmd+Z** (Mac) to end input early.
+2. Switch focus to the target application (e.g., CKEditor in a browser).
+3. Press **F8** → The text will be typed automatically.
+4. Press **F10** → The program will exit.
 
 Example output:
+
+```
 🤖 Enter the text you want me to type (max 1000 words):
 Hello CKEditor!
 
 ⚠️ Input ended by Ctrl+Z / Cmd+Z
 
 ✅ Bot ready — focus the target app and press F8 to type. Press F10 to quit.
-Note: The bot no longer adds an extra newline at the end of typed text.
+```
 
-🔧 Development
-Code Formatting & Linting
+> Note: The bot no longer adds an extra newline at the end of typed text.
+
+---
+
+## 🔧 Development
+
+### Code Formatting & Linting
+
+```bash
 cargo fmt --all
 cargo clippy --all-targets --all-features -- -D warnings
+```
 
-Run Tests
+### Run Tests
+
+```bash
 cargo test
+```
 
-Run in Debug Mode
+### Run in Debug Mode
+
+```bash
 cargo run
+```
 
-📂 Project Structure
+---
+
+## 📂 Project Structure
+
+```
 src/
  └─ main.rs        # Entrypoint
 Cargo.toml         # Dependencies & metadata
 LICENSE            # MIT license
 README.md          # Project documentation
+```
 
-🚀 Roadmap
- Cross-platform testing (Linux/Wayland, macOS)
+---
 
- Configurable hotkeys
+## 🚀 Roadmap
 
- Config file support (YAML/TOML)
+* [ ] Cross-platform testing (Linux/Wayland, macOS)
+* [ ] Configurable hotkeys
+* [ ] Config file support (YAML/TOML)
+* [ ] Pre-built binaries in GitHub Releases
 
- Pre-built binaries in GitHub Releases
+---
 
-🤝 Contributing
+## 🤝 Contributing
+
 Contributions are welcome! 🙌
-Please open an issue or submit a pull request.
-Commit messages should follow the Conventional Commits standard.
+Please open an [issue](https://github.com/xm4yestiK/ckeditor-bot/issues) or submit a pull request.
+Commit messages should follow the [Conventional Commits](https://www.conventionalcommits.org/) standard.
 
-📜 License
-MIT License © 2025 m4yestiK
+---
 
-See the LICENSE file for details.
+## 📜 License
 
-⭐ Support
-If you find this project useful, please consider giving it a star on GitHub! 🌟
+MIT License © 2025 [m4yestiK](https://github.com/xm4yestiK)
+
+See the [LICENSE](LICENSE) file for details.
+
+---
+
+## ⭐ Support
+
+If you find this project useful, please consider giving it a **star** on GitHub! 🌟
