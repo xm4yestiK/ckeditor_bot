@@ -3,103 +3,161 @@ use colored::*;
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use enigo::{Enigo, KeyboardControllable};
 use figlet_rs::FIGfont;
-use std::io::{self, Write};
+use std::io::{self, BufRead, Write};
+use std::process;
 use std::thread;
-use std::time::Duration;
-use tracing::{debug, error, info, warn};
+use std::time::{Duration, Instant};
+use tracing::{debug, info, warn};
 use tracing_subscriber;
 
 const POLL_INTERVAL: Duration = Duration::from_millis(50);
-const TYPE_DELAY: Duration = Duration::from_millis(100);
+const PRE_TYPE_DELAY: Duration = Duration::from_secs(3);
+const COUNTDOWN_STEP: Duration = Duration::from_millis(200);
+const MAX_WORDS: usize = 1000;
+const BASE_TYPE_DELAY: Duration = Duration::from_millis(5);
+const MAX_TYPE_DELAY: Duration = Duration::from_millis(40);
 
 fn main() {
     tracing_subscriber::fmt()
+        .with_writer(io::stderr) // semua log ke stderr
         .with_target(false)
         .compact()
         .init();
 
     if let Err(e) = run() {
-        error!("❌ Program crashed: {:?}", e);
-        std::process::exit(1);
+        eprintln!("❌ Program crashed: {:?}", e);
+        process::exit(1);
     }
 }
 
 fn run() -> Result<()> {
     display_banner();
-
     loop {
         let text_to_type = get_user_text().context("Failed to read user input")?;
-        info!("Bot ready — focus the target app and press F8 to type. Press F10 to quit.");
+        let word_count = count_words(&text_to_type);
+        info!("Captured {} word(s). Focus the target app and press F8 to type. Press F10 to quit.", word_count);
         if !event_loop(&text_to_type)? {
-            info!("Exiting by user request.");
+            process::exit(0);
+        }
+    }
+}
+
+fn display_banner() {
+    if let Ok(font) = FIGfont::standard() {
+        if let Some(fig) = font.convert("CKEDITOR BOT") {
+            println!("{}", fig.to_string().green().bold());
+        } else {
+            println!("{}", "CKEDITOR BOT".green().bold());
+        }
+    } else {
+        println!("{}", "CKEDITOR BOT".green().bold());
+    }
+    println!("{}", "\n; ================================================================\n; CKEDITOR BOT © 2025 m4yestiK\n; Licensed under the MIT License\n; https://github.com/xm4yestiK/ckeditor_bot\n; ================================================================\n".bright_black());
+}
+
+fn count_words(s: &str) -> usize {
+    s.split_whitespace().count()
+}
+
+fn get_user_text() -> Result<String> {
+    eprintln!(
+        "{}",
+        format!("🤖 Enter the text you want me to type (max {} words).", MAX_WORDS)
+            .cyan()
+            .bold()
+    );
+    eprintln!("{}", "(Type multiple lines. Press Ctrl+Z (Windows) / Cmd+Z (Mac) to finish input)".bright_black());
+    io::stdout().flush().context("Failed to flush stdout")?;
+
+    let device_state = DeviceState::new();
+    let stdin = io::stdin();
+    let mut lines: Vec<String> = Vec::new();
+    let mut total_words = 0;
+
+    for line in stdin.lock().lines() {
+        let line = line.context("Failed to read line from stdin")?;
+        let line_trimmed = line.trim();
+        if line_trimmed.is_empty() {
+            continue;
+        }
+
+        let word_count = line_trimmed.split_whitespace().count();
+        if total_words + word_count > MAX_WORDS {
+            let remaining = MAX_WORDS - total_words;
+            let truncated_line = line_trimmed
+                .split_whitespace()
+                .take(remaining)
+                .collect::<Vec<&str>>()
+                .join(" ");
+            lines.push(truncated_line);
+            eprintln!("⚠️ Reached max word limit, truncating input.");
+            break;
+        } else {
+            lines.push(line_trimmed.to_string());
+            total_words += word_count;
+        }
+
+        // deteksi Ctrl+Z / Cmd+Z
+        let keys = device_state.get_keys();
+        let ctrl_or_cmd = keys.contains(&Keycode::LControl)
+            || keys.contains(&Keycode::RControl)
+            || keys.contains(&Keycode::Meta);
+        if ctrl_or_cmd && keys.contains(&Keycode::Z) {
+            eprintln!("⚠️ Input ended by Ctrl+Z / Cmd+Z");
             break;
         }
     }
 
-    Ok(())
-}
-
-fn display_banner() {
-    match FIGfont::standard() {
-        Ok(font) => {
-            if let Some(fig) = font.convert("CKEDITOR BOT") {
-                println!("{}", fig.to_string().green().bold());
-            } else {
-                println!("{}", "CKEDITOR BOT".green().bold());
-            }
-        }
-        Err(e) => {
-            eprintln!("{} Failed to load FIGfont: {}", "⚠️".yellow(), e);
-            println!("{}", "CKEDITOR BOT".green().bold());
-        }
+    if lines.is_empty() {
+        return Err(anyhow::anyhow!("Text cannot be empty"));
     }
 
-    println!(
-        "{}",
-        "\n; ================================================================\n\
-         ; BYPASS CKEDITOR COPY PASTE BLOCKER, HAPPY HACKING!\n\
-         ; ================================================================\n"
-        .bright_black()
-    );
-    println!(
-        "{}",
-        "\n; ================================================================\n\
-         ; CKEDITOR BOT © 2025 m4yestiK\n\
-         ; Licensed under the MIT License\n\
-         ; https://github.com/xm4yestiK/ckeditor_bot\n\
-         ; ================================================================\n"
-        .bright_black()
-    );
+    Ok(lines.join("\r\n"))
 }
 
-fn get_user_text() -> Result<String> {
-    print!("{}", "🤖 Yo! Gimme the text u want me to type, then hit Enter: ".cyan().bold());
-    io::stdout().flush().context("Failed to flush stdout")?;
-
-    let mut user_input = String::new();
-    io::stdin()
-        .read_line(&mut user_input)
-        .context("Failed to read line from stdin")?;
-
-    let trimmed = user_input.trim();
-    if trimmed.is_empty() {
-        Err(anyhow::anyhow!("Text cannot be empty"))
-    } else {
-        Ok(trimmed.to_owned())
-    }
-}
 
 fn type_text(text: &str) {
+    if PRE_TYPE_DELAY.as_secs() > 0 {
+        let start = Instant::now();
+        let total_ms = PRE_TYPE_DELAY.as_millis() as u64;
+        let mut elapsed = 0u64;
+        while elapsed < total_ms {
+            let remaining = total_ms.saturating_sub(elapsed);
+            let secs = remaining / 1000;
+            let ms = remaining % 1000;
+            print!("{}", format!("\rTyping in {}.{:03}s... (switch to target window now)", secs, ms).yellow());
+            let _ = io::stdout().flush();
+            thread::sleep(COUNTDOWN_STEP);
+            elapsed = start.elapsed().as_millis() as u64;
+        }
+        println!();
+    }
+
+    let delay = calculate_delay(text.len());
     let mut enigo = Enigo::new();
     warn!("🔥 F8 detected — typing now...");
-    thread::sleep(TYPE_DELAY);
-    enigo.key_sequence(text);
+
+    for ch in text.chars() {
+        if ch == '\n' {
+            enigo.key_click(enigo::Key::Return);
+        } else {
+            enigo.key_sequence(&ch.to_string());
+        }
+        thread::sleep(delay);
+    }
+
     info!("✅ Done typing. Returning to prompt...");
+}
+
+fn calculate_delay(text_len: usize) -> Duration {
+    let factor = (text_len as f64 / (MAX_WORDS * 6) as f64).min(1.0);
+    let delay_ms = BASE_TYPE_DELAY.as_millis() as f64 + (MAX_TYPE_DELAY.as_millis() as f64 - BASE_TYPE_DELAY.as_millis() as f64) * factor;
+    Duration::from_millis(delay_ms as u64)
 }
 
 fn event_loop(text_to_type: &str) -> Result<bool> {
     let device_state = DeviceState::new();
-    let mut prev_f8 = false;
+    let mut prev_f8_pressed = false;
 
     loop {
         let keys = device_state.get_keys();
@@ -110,28 +168,19 @@ fn event_loop(text_to_type: &str) -> Result<bool> {
             return Ok(false);
         }
 
-        let now_f8 = keys.contains(&Keycode::F8);
+        let now_f8_pressed = keys.contains(&Keycode::F8);
 
-        if now_f8 && !prev_f8 {
-            let res = std::panic::catch_unwind(|| {
-                type_text(text_to_type);
-            });
-            if let Err(e) = res {
-                error!("Panic while typing: {:?}", e);
-            }
+        if now_f8_pressed && !prev_f8_pressed {
+            type_text(text_to_type);
 
-            loop {
-                let keys_after = device_state.get_keys();
-                if !keys_after.contains(&Keycode::F8) {
-                    break;
-                }
+            while device_state.get_keys().contains(&Keycode::F8) {
                 thread::sleep(POLL_INTERVAL);
             }
 
             return Ok(true);
         }
 
-        prev_f8 = now_f8;
+        prev_f8_pressed = now_f8_pressed;
         thread::sleep(POLL_INTERVAL);
     }
 }
