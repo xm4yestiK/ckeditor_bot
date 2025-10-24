@@ -57,7 +57,7 @@ Run the program:
 
 1. Enter the text you want the bot to type (up to 1000 words).
 
-   * Press **Ctrl+Z** (Windows) / **Cmd+Z** (Mac) to end input early.
+   * Type **!!END** to end input early.
 2. Switch focus to the target application (e.g., CKEditor in a browser).
 3. Press **F8** → The text will be typed automatically.
 4. Press **F10** → The program will exit.
@@ -68,7 +68,7 @@ Example output:
 🤖 Enter the text you want me to type (max 1000 words):
 Hello CKEditor!
 
-⚠️ Input ended by Ctrl+Z / Cmd+Z
+⚠️ Input ended by Type !!END
 
 ✅ Bot ready — focus the target app and press F8 to type. Press F10 to quit.
 ```
