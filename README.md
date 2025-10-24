@@ -13,7 +13,7 @@ This bot automatically types user-provided text into the target application usin
   - `F10` → Exits the program
 - 📝 **Interactive input**: Provide text once, then trigger typing on demand
   - Supports **multiline input**
-  - Detects **Ctrl+Z / Cmd+Z** to end input without polluting text
+  - Type `!!END` to end input without polluting text
 - 📊 **Structured logging**: Powered by [`tracing`](https://docs.rs/tracing)
 - 🎨 **ASCII banner**: Rendered with [`figlet-rs`](https://crates.io/crates/figlet-rs)
 - 🔒 **Robust error handling**: Built with [`anyhow`](https://crates.io/crates/anyhow)
