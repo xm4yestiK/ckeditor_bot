@@ -19,7 +19,7 @@ const MAX_TYPE_DELAY: Duration = Duration::from_millis(40);
 
 fn main() {
     tracing_subscriber::fmt()
-        .with_writer(io::stderr) // semua log ke stderr
+        .with_writer(io::stderr)
         .with_target(false)
         .compact()
         .init();
@@ -35,7 +35,10 @@ fn run() -> Result<()> {
     loop {
         let text_to_type = get_user_text().context("Failed to read user input")?;
         let word_count = count_words(&text_to_type);
-        info!("Captured {} word(s). Focus the target app and press F8 to type. Press F10 to quit.", word_count);
+        info!(
+            "Captured {} word(s). Focus the target app and press F8 to type. Press F10 to quit.",
+            word_count
+        );
         if !event_loop(&text_to_type)? {
             process::exit(0);
         }
@@ -62,59 +65,63 @@ fn count_words(s: &str) -> usize {
 fn get_user_text() -> Result<String> {
     eprintln!(
         "{}",
-        format!("🤖 Enter the text you want me to type (max {} words).", MAX_WORDS)
-            .cyan()
-            .bold()
+        format!(
+            "🤖 Enter the text you want me to type (max {} words).",
+            MAX_WORDS
+        )
+        .cyan()
+        .bold()
     );
-    eprintln!("{}", "(Type multiple lines. Press Ctrl+Z (Windows) / Cmd+Z (Mac) to finish input)".bright_black());
+    eprintln!(
+        "{}",
+        "(Type multiple lines. Type !!END on a new line to finish)"
+            .bright_black()
+    );
     io::stdout().flush().context("Failed to flush stdout")?;
 
-    let device_state = DeviceState::new();
     let stdin = io::stdin();
     let mut lines: Vec<String> = Vec::new();
     let mut total_words = 0;
 
-    for line in stdin.lock().lines() {
-        let line = line.context("Failed to read line from stdin")?;
-        let line_trimmed = line.trim();
-        if line_trimmed.is_empty() {
+    for line_result in stdin.lock().lines() {
+        let line = line_result.context("Failed to read line from stdin")?;
+
+        if line.trim() == "!!END" {
+            eprintln!("⚠️ Input ended by !!END");
+            break;
+        }
+
+        let line_for_counting = line.trim();
+        let word_count = line_for_counting.split_whitespace().count();
+
+        if word_count == 0 {
+            lines.push(line);
             continue;
         }
 
-        let word_count = line_trimmed.split_whitespace().count();
         if total_words + word_count > MAX_WORDS {
             let remaining = MAX_WORDS - total_words;
-            let truncated_line = line_trimmed
+            let truncated_line = line_for_counting
                 .split_whitespace()
                 .take(remaining)
                 .collect::<Vec<&str>>()
                 .join(" ");
             lines.push(truncated_line);
+            total_words += remaining;
             eprintln!("⚠️ Reached max word limit, truncating input.");
             break;
         } else {
-            lines.push(line_trimmed.to_string());
+            lines.push(line);
             total_words += word_count;
-        }
-
-        // deteksi Ctrl+Z / Cmd+Z
-        let keys = device_state.get_keys();
-        let ctrl_or_cmd = keys.contains(&Keycode::LControl)
-            || keys.contains(&Keycode::RControl)
-            || keys.contains(&Keycode::Meta);
-        if ctrl_or_cmd && keys.contains(&Keycode::Z) {
-            eprintln!("⚠️ Input ended by Ctrl+Z / Cmd+Z");
-            break;
         }
     }
 
-    if lines.is_empty() {
+    if lines.is_empty() && total_words == 0 {
         return Err(anyhow::anyhow!("Text cannot be empty"));
     }
 
-    Ok(lines.join("\r\n"))
+    Ok(lines.join("\n"))
 }
-
 
 fn type_text(text: &str) {
     if PRE_TYPE_DELAY.as_secs() > 0 {
@@ -125,7 +132,14 @@ fn type_text(text: &str) {
             let remaining = total_ms.saturating_sub(elapsed);
             let secs = remaining / 1000;
             let ms = remaining % 1000;
-            print!("{}", format!("\rTyping in {}.{:03}s... (switch to target window now)", secs, ms).yellow());
+            print!(
+                "{}",
+                format!(
+                    "\rTyping in {}.{:03}s... (switch to target window now)",
+                    secs, ms
+                )
+                .yellow()
+            );
             let _ = io::stdout().flush();
             thread::sleep(COUNTDOWN_STEP);
             elapsed = start.elapsed().as_millis() as u64;
@@ -141,7 +155,7 @@ fn type_text(text: &str) {
         if ch == '\n' {
             enigo.key_click(enigo::Key::Return);
         } else {
-            enigo.key_sequence(&ch.to_string());
+            enigo.key_click(enigo::Key::Layout(ch));
         }
         thread::sleep(delay);
     }
@@ -151,7 +165,8 @@ fn type_text(text: &str) {
 
 fn calculate_delay(text_len: usize) -> Duration {
     let factor = (text_len as f64 / (MAX_WORDS * 6) as f64).min(1.0);
-    let delay_ms = BASE_TYPE_DELAY.as_millis() as f64 + (MAX_TYPE_DELAY.as_millis() as f64 - BASE_TYPE_DELAY.as_millis() as f64) * factor;
+    let delay_ms = BASE_TYPE_DELAY.as_millis() as f64
+        + (MAX_TYPE_DELAY.as_millis() as f64 - BASE_TYPE_DELAY.as_millis() as f64) * factor;
     Duration::from_millis(delay_ms as u64)
 }
 
