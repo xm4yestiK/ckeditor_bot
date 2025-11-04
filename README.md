@@ -1,68 +1,69 @@
-````markdown
-# CKEditor Bot 🚀
-
-A Rust-based utility to **bypass CKEditor’s copy-paste restrictions**.  
-This bot automatically types user-provided text into the target application using hotkeys.
+CKEditor Bot 🚀
+A Rust-based utility to bypass CKEditor’s copy-paste restrictions.
+Automatically types user-provided text into any active application using hotkeys.
 
 ---
 
-## ✨ Features
+Features
 
-- ⚡ **Hotkey Control**
-  - `F8` → Automatically types the provided text into the active application
-  - `F10` → Exits the program
-- 📝 **Interactive input**: Provide text once, then trigger typing on demand
-  - Supports **multiline input**
-  - Type `!!END` to end input without polluting text
-- 📊 **Structured logging**: Powered by [`tracing`](https://docs.rs/tracing)
-- 🎨 **ASCII banner**: Rendered with [`figlet-rs`](https://crates.io/crates/figlet-rs)
-- 🔒 **Robust error handling**: Built with [`anyhow`](https://crates.io/crates/anyhow)
+* Hotkey Control
+
+  * F8 → Types provided text into active window
+  * F10 → Exits program
+* Interactive Input
+
+  * Accepts multiline text
+  * Use !!END to stop input cleanly
+* Structured logging via tracing
+* ASCII banner via figlet-rs
+* Error handling with anyhow
 
 ---
 
-## 📦 Installation
+Installation
 
-### Clone & Build
+Clone and build:
 
-```bash
+```
 git clone https://github.com/xm4yestiK/ckeditor-bot.git
 cd ckeditor-bot
 cargo build --release
-````
+```
 
-The binary will be available at:
+Binary output:
 
 ```
 target/release/ckeditor-bot
 ```
 
-### Requirements
+Requirements
 
-* **Rust toolchain**: [Install Rust](https://www.rust-lang.org/tools/install)
+* Rust toolchain ([https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
 * Tested on:
 
-  * ✅ Windows 10/11
-  * ✅ Linux (X11)
-  * ✅ macOS (limited support)
+  * Windows 10/11
+  * Linux (X11)
+  * macOS (limited)
 
 ---
 
-## ▶ Usage
+Usage
+Run:
 
-Run the program:
-
-```bash
+```
 ./ckeditor-bot
 ```
 
-1. Enter the text you want the bot to type (up to 1000 words).
+Steps:
 
-   * Type **!!END** to end input early.
-2. Switch focus to the target application (e.g., CKEditor in a browser).
-3. Press **F8** → The text will be typed automatically.
-4. Press **F10** → The program will exit.
+1. Enter text (max 1000 words).
 
-Example output:
+   * Type !!END to stop early.
+2. Focus target app (e.g., CKEditor in browser).
+3. Press F8 to type.
+4. Press F10 to exit.
+
+Example:
 
 ```
 🤖 Enter the text you want me to type (max 1000 words):
@@ -73,70 +74,65 @@ Hello CKEditor!
 ✅ Bot ready — focus the target app and press F8 to type. Press F10 to quit.
 ```
 
-> Note: The bot no longer adds an extra newline at the end of typed text.
+Note: No trailing newline added after typing.
 
 ---
 
-## 🔧 Development
+Development
 
-### Code Formatting & Linting
+Formatting & linting:
 
-```bash
+```
 cargo fmt --all
 cargo clippy --all-targets --all-features -- -D warnings
 ```
 
-### Run Tests
+Tests:
 
-```bash
+```
 cargo test
 ```
 
-### Run in Debug Mode
+Debug run:
 
-```bash
+```
 cargo run
 ```
 
 ---
 
-## 📂 Project Structure
+Project Structure
 
 ```
 src/
- └─ main.rs        # Entrypoint
-Cargo.toml         # Dependencies & metadata
-LICENSE            # MIT license
-README.md          # Project documentation
+ └─ main.rs
+Cargo.toml
+LICENSE
+README.md
 ```
 
 ---
 
-## 🚀 Roadmap
+Roadmap
 
-* [ ] Cross-platform testing (Linux/Wayland, macOS)
+* [ ] Cross-platform (Linux/Wayland, macOS)
 * [ ] Configurable hotkeys
-* [ ] Config file support (YAML/TOML)
-* [ ] Pre-built binaries in GitHub Releases
+* [ ] Config file (YAML/TOML)
+* [ ] Pre-built binaries in Releases
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! 🙌
-Please open an [issue](https://github.com/xm4yestiK/ckeditor-bot/issues) or submit a pull request.
-Commit messages should follow the [Conventional Commits](https://www.conventionalcommits.org/) standard.
+Contributing
+Open issues or PRs at [https://github.com/xm4yestiK/ckeditor-bot/issues](https://github.com/xm4yestiK/ckeditor-bot/issues)
+Use Conventional Commits for messages.
 
 ---
 
-## 📜 License
-
-MIT License © 2025 [m4yestiK](https://github.com/xm4yestiK)
-
-See the [LICENSE](LICENSE) file for details.
+License
+MIT © 2025 m4yestiK
+See LICENSE file for details.
 
 ---
 
-## ⭐ Support
-
-If you find this project useful, please consider giving it a **star** on GitHub! 🌟
+Support
+⭐ Star this project on GitHub if useful!
