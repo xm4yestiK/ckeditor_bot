@@ -1,47 +1,35 @@
-use anyhow::{Context, Result};
-use colored::*;
-use device_query::{DeviceQuery, DeviceState, Keycode};
-use enigo::{Enigo, KeyboardControllable};
-use figlet_rs::FIGfont;
 use std::io::{self, BufRead, Write};
 use std::process;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
-use tracing::{debug, info, warn};
+use colored::*;
+use enigo::{Enigo, KeyboardControllable, Key};
+use figlet_rs::FIGfont;
+use rand::Rng;
+use rdev::{listen, Event, EventType, Key as RKey};
+use tracing::{info, warn};
 use tracing_subscriber;
 
-const POLL_INTERVAL: Duration = Duration::from_millis(50);
-const PRE_TYPE_DELAY: Duration = Duration::from_secs(3);
-const COUNTDOWN_STEP: Duration = Duration::from_millis(200);
+const PRE_TYPE_DELAY: Duration = Duration::from_secs(1);
+const COUNTDOWN_STEP: Duration = Duration::from_millis(100);
 const MAX_WORDS: usize = 1000;
-const BASE_TYPE_DELAY: Duration = Duration::from_millis(5);
-const MAX_TYPE_DELAY: Duration = Duration::from_millis(40);
 
 fn main() {
-    tracing_subscriber::fmt()
-        .with_writer(io::stderr)
-        .with_target(false)
-        .compact()
-        .init();
-
+    tracing_subscriber::fmt().with_writer(io::stderr).with_target(false).compact().init();
     if let Err(e) = run() {
         eprintln!("❌ Program crashed: {:?}", e);
         process::exit(1);
     }
 }
 
-fn run() -> Result<()> {
+fn run() -> anyhow::Result<()> {
     display_banner();
     loop {
-        let text_to_type = get_user_text().context("Failed to read user input")?;
+        let text_to_type = get_user_text()?;
         let word_count = count_words(&text_to_type);
-        info!(
-            "Captured {} word(s). Focus the target app and press F8 to type. Press F10 to quit.",
-            word_count
-        );
-        if !event_loop(&text_to_type)? {
-            process::exit(0);
-        }
+        info!("Captured {} word(s). Press F8 to type, Esc to quit.", word_count);
+        event_loop(text_to_type.clone())?;
     }
 }
 
@@ -62,52 +50,29 @@ fn count_words(s: &str) -> usize {
     s.split_whitespace().count()
 }
 
-fn get_user_text() -> Result<String> {
-    eprintln!(
-        "{}",
-        format!(
-            "🤖 Enter the text you want me to type (max {} words).",
-            MAX_WORDS
-        )
-        .cyan()
-        .bold()
-    );
-    eprintln!(
-        "{}",
-        "(Type multiple lines. Type !!END on a new line to finish)"
-            .bright_black()
-    );
-    io::stdout().flush().context("Failed to flush stdout")?;
-
+fn get_user_text() -> anyhow::Result<String> {
+    eprintln!("{}", format!("🤖 Enter the text you want me to type (max {} words).", MAX_WORDS).cyan().bold());
+    eprintln!("{}", "(Type multiple lines. Type !!END on a new line to finish)".bright_black());
+    io::stdout().flush()?;
     let stdin = io::stdin();
     let mut lines: Vec<String> = Vec::new();
     let mut total_words = 0;
-
     for line_result in stdin.lock().lines() {
-        let line = line_result.context("Failed to read line from stdin")?;
-
+        let line = line_result?;
         if line.trim() == "!!END" {
             eprintln!("⚠️ Input ended by !!END");
             break;
         }
-
         let line_for_counting = line.trim();
         let word_count = line_for_counting.split_whitespace().count();
-
         if word_count == 0 {
             lines.push(line);
             continue;
         }
-
         if total_words + word_count > MAX_WORDS {
             let remaining = MAX_WORDS - total_words;
-            let truncated_line = line_for_counting
-                .split_whitespace()
-                .take(remaining)
-                .collect::<Vec<&str>>()
-                .join(" ");
+            let truncated_line = line_for_counting.split_whitespace().take(remaining).collect::<Vec<&str>>().join(" ");
             lines.push(truncated_line);
-            total_words += remaining;
             eprintln!("⚠️ Reached max word limit, truncating input.");
             break;
         } else {
@@ -115,11 +80,9 @@ fn get_user_text() -> Result<String> {
             total_words += word_count;
         }
     }
-
     if lines.is_empty() && total_words == 0 {
         return Err(anyhow::anyhow!("Text cannot be empty"));
     }
-
     Ok(lines.join("\n"))
 }
 
@@ -132,70 +95,58 @@ fn type_text(text: &str) {
             let remaining = total_ms.saturating_sub(elapsed);
             let secs = remaining / 1000;
             let ms = remaining % 1000;
-            print!(
-                "{}",
-                format!(
-                    "\rTyping in {}.{:03}s... (switch to target window now)",
-                    secs, ms
-                )
-                .yellow()
-            );
+            print!("\r{}", format!("Typing in {}.{:03}s...", secs, ms).yellow());
             let _ = io::stdout().flush();
             thread::sleep(COUNTDOWN_STEP);
             elapsed = start.elapsed().as_millis() as u64;
         }
         println!();
     }
-
-    let delay = calculate_delay(text.len());
     let mut enigo = Enigo::new();
+    let mut rng = rand::rng();
     warn!("🔥 F8 detected — typing now...");
-
+    thread::sleep(Duration::from_millis(200));
     for ch in text.chars() {
-        if ch == '\n' {
-            enigo.key_click(enigo::Key::Return);
-        } else {
-            enigo.key_click(enigo::Key::Layout(ch));
+        match ch {
+            '\n' => {
+                enigo.key_click(Key::Return);
+                thread::sleep(Duration::from_millis(2));
+            }
+            ' ' => {
+                enigo.key_click(Key::Space);
+                thread::sleep(Duration::from_millis(1));
+            }
+            _ => {
+                enigo.key_sequence(&ch.to_string());
+                let delay = rng.random_range(1..2);
+                thread::sleep(Duration::from_millis(delay));
+            }
         }
-        thread::sleep(delay);
     }
-
     info!("✅ Done typing. Returning to prompt...");
 }
 
-fn calculate_delay(text_len: usize) -> Duration {
-    let factor = (text_len as f64 / (MAX_WORDS * 6) as f64).min(1.0);
-    let delay_ms = BASE_TYPE_DELAY.as_millis() as f64
-        + (MAX_TYPE_DELAY.as_millis() as f64 - BASE_TYPE_DELAY.as_millis() as f64) * factor;
-    Duration::from_millis(delay_ms as u64)
-}
-
-fn event_loop(text_to_type: &str) -> Result<bool> {
-    let device_state = DeviceState::new();
-    let mut prev_f8_pressed = false;
-
-    loop {
-        let keys = device_state.get_keys();
-        debug!("Pressed keys: {:?}", keys);
-
-        if keys.contains(&Keycode::F10) {
-            warn!("F10 pressed -> quitting");
-            return Ok(false);
-        }
-
-        let now_f8_pressed = keys.contains(&Keycode::F8);
-
-        if now_f8_pressed && !prev_f8_pressed {
-            type_text(text_to_type);
-
-            while device_state.get_keys().contains(&Keycode::F8) {
-                thread::sleep(POLL_INTERVAL);
+fn event_loop(text_to_type: String) -> anyhow::Result<()> {
+    let is_typing = Arc::new(Mutex::new(false));
+    let typing_flag = is_typing.clone();
+    let _ = listen(move |event: Event| {
+        if let EventType::KeyPress(key) = event.event_type {
+            if key == RKey::F8 {
+                let mut flag = typing_flag.lock().unwrap();
+                if !*flag {
+                    *flag = true;
+                    let text = text_to_type.clone();
+                    let typing_flag_clone = typing_flag.clone();
+                    thread::spawn(move || {
+                        type_text(&text);
+                        *typing_flag_clone.lock().unwrap() = false;
+                    });
+                }
+            } else if key == RKey::Escape {
+                std::process::exit(0);
             }
-
-            return Ok(true);
         }
-
-        prev_f8_pressed = now_f8_pressed;
-        thread::sleep(POLL_INTERVAL);
-    }
+    });
+    Ok(())
 }
+
